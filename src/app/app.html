@@ -1,12 +1,52 @@
-    <div class="p-4">
-      <h2>🎤 Voice Agent Demo (Ultravox + Angular)</h2>
-      <button (click)="start()" [disabled]="sessionStarted" class="btn">Start</button>
-      <button (click)="stop()" [disabled]="!sessionStarted" class="btn stop">Stop</button>
+    <div class="container">
+      <h1>Ultravox Voice Agent</h1>
+      
+      <div class="status-card">
+        <div class="status-indicator" [class.active]="isConnected"></div>
+        <span>{{ status }}</span>
+      </div>
 
-      <div class="mt-4">
-        <div *ngFor="let t of transcripts">
-          <strong>{{t.speaker}}:</strong> {{t.text}}
+      <div class="controls">
+        <button 
+          *ngIf="!isConnected" 
+          (click)="startCall()" 
+          class="btn btn-primary"
+          [disabled]="isConnecting">
+          <span *ngIf="!isConnecting">🎤 Start Voice Call</span>
+          <span *ngIf="isConnecting">Connecting...</span>
+        </button>
+
+        <button 
+          *ngIf="isConnected" 
+          (click)="endCall()" 
+          class="btn btn-danger">
+          🔴 End Call
+        </button>
+      </div>
+
+      <div class="transcript-section" *ngIf="transcripts.length > 0">
+        <h3>Conversation</h3>
+        <div class="transcript-container">
+          <div 
+            *ngFor="let transcript of transcripts" 
+            class="transcript-item"
+            [class.user]="transcript.speaker === 'user'"
+            [class.agent]="transcript.speaker === 'agent'">
+            <strong>{{ transcript.speaker === 'user' ? 'You' : 'Agent' }}:</strong>
+            <span>{{ transcript.text }}</span>
+          </div>
         </div>
       </div>
+
+      <div class="info-section">
+        <h4>Instructions:</h4>
+        <ol>
+          <li>Click "Start Voice Call" to begin</li>
+          <li>Allow microphone access when prompted</li>
+          <li>Speak naturally - the agent will respond</li>
+          <li>Click "End Call" when finished</li>
+        </ol>
+      </div>
     </div>
+
 <router-outlet />

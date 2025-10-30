@@ -30,6 +30,8 @@
     "@angular/router": "^20.3.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
+    "ultravox": "^0.1.0",
+    "ultravox-client": "^0.4.2",
     "zone.js": "~0.15.0"
   },
   "devDependencies": {
