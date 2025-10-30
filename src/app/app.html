@@ -1,0 +1,12 @@
+    <div class="p-4">
+      <h2>🎤 Voice Agent Demo (Ultravox + Angular)</h2>
+      <button (click)="start()" [disabled]="sessionStarted" class="btn">Start</button>
+      <button (click)="stop()" [disabled]="!sessionStarted" class="btn stop">Stop</button>
+
+      <div class="mt-4">
+        <div *ngFor="let t of transcripts">
+          <strong>{{t.speaker}}:</strong> {{t.text}}
+        </div>
+      </div>
+    </div>
+<router-outlet />
