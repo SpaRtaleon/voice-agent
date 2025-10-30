@@ -2,6 +2,7 @@ import { CommonModule, NgFor } from '@angular/common';
 import { Component, OnInit, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { UltravoxSession } from 'ultravox-client';
+import { Service } from './service';
 
 @Component({
   selector: 'app-root',
@@ -10,76 +11,54 @@ import { UltravoxSession } from 'ultravox-client';
   styleUrl: './app.scss'
 })
 export class App   {
- session: UltravoxSession | null = null;
+  session: UltravoxSession | null = null;
   isConnected = false;
   isConnecting = false;
-  isConfigured = false;
   status = 'Not started';
   transcripts: Array<{ speaker: 'user' | 'agent', text: string }> = [];
   errorMessage = '';
-  private api_key = 'MnRnukQ1.CVZ3FUrsEEerwT7r2zvVAK28uChaKxSd';
-  private agent_id='75e2aaa3-e4cc-4bf1-b137-0c7268881055'
-  // Replace with your Ultravox API key and configuration
-  private readonly ULTRAVOX_API_KEY = 'your_ultravox_api_key_here';
-  private readonly JOIN_URL = 'your_ultravox_join_url_here';
-  async createCall(): Promise<string> {
-  const response = await fetch(`https://api.ultravox.ai/api/agents/75e2aaa3-e4cc-4bf1-b137-0c7268881055/calls`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-API-Key': this.api_key
-    },
-    body: JSON.stringify({ 
-     "metadata": {},
-  "medium": {
-    "webRtc": {}
 
-  }
-})
-  });
+  constructor(private service: Service) {}
 
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Failed to create call: ${error}`);
-  }
-
-  const data = await response.json();
-  console.log('Call Created ✅', data);
-
-  return data.joinUrl; // <-- This is the Ultravox WebRTC join URL
-}
-   async startCall() {
+  async startCall() {
     try {
       this.isConnecting = true;
       this.status = 'Creating call session...';
       this.errorMessage = '';
 
-      // Request microphone permission first
       await navigator.mediaDevices.getUserMedia({ audio: true });
 
-      // Create call session with Ultravox API
-      const joinUrl = await this.createCall();
-      
+      const joinUrl = await this.service.createCall();
       this.status = 'Connecting to voice agent...';
 
-      // Create Ultravox session
       this.session = new UltravoxSession();
 
-      // Set up event listeners
+      // ✅ Properly handle all connection states
       this.session.addEventListener('status', (event: any) => {
-        console.log('Status:', event.state);
-        this.status = event.state;
-        
-        if (event.state === 'idle') {
+        console.log('Ultravox status:', event.state);
+
+        if (['connected', 'idle', 'ready'].includes(event.state)) {
           this.isConnected = true;
           this.isConnecting = false;
           this.status = 'Connected - Speak now!';
-        } else if (event.state === 'disconnected') {
+        } else if (event.state === 'connecting') {
+          this.isConnecting = true;
           this.isConnected = false;
+          this.status = 'Connecting...';
+        } else if (event.state === 'disconnected' || event.state === 'closed') {
+          this.isConnected = false;
+          this.isConnecting = false;
           this.status = 'Disconnected';
+        } else if (event.state === 'error') {
+          this.isConnected = false;
+          this.isConnecting = false;
+          this.status = 'Error';
+        } else {
+          this.status = event.state;
         }
       });
 
+      // ✅ Handle transcripts
       this.session.addEventListener('transcripts', (event: any) => {
         console.log('Transcript:', event);
         if (event.text && event.text.trim()) {
@@ -90,6 +69,7 @@ export class App   {
         }
       });
 
+      // ✅ Handle errors
       this.session.addEventListener('error', (event: any) => {
         console.error('Ultravox error:', event);
         this.errorMessage = event.message || 'Connection error occurred';
@@ -98,9 +78,7 @@ export class App   {
         this.isConnected = false;
       });
 
-      // Join the call
       await this.session.joinCall(joinUrl);
-
     } catch (error: any) {
       console.error('Failed to start call:', error);
       this.errorMessage = error.message || 'Failed to connect';
@@ -115,6 +93,7 @@ export class App   {
       await this.session.leaveCall();
       this.session = null;
       this.isConnected = false;
+      this.isConnecting = false;
       this.status = 'Disconnected';
     }
   }
