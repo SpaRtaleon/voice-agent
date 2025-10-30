@@ -1,7 +1,7 @@
 import { CommonModule, NgFor } from '@angular/common';
 import { Component, OnInit, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { UltravoxSession } from 'ultravox-client';
+import { UltravoxSession,UltravoxSessionStatus } from 'ultravox-client';
 import { Service } from './service';
 
 @Component({
@@ -32,32 +32,43 @@ export class App   {
       this.status = 'Connecting to voice agent...';
 
       this.session = new UltravoxSession();
+      
+        console.log('Ultravox this.session.status:', this.session.status);
 
       // ✅ Properly handle all connection states
-      this.session.addEventListener('status', (event: any) => {
-        console.log('Ultravox status:', event.state);
+    this.session.addEventListener('status', () => {
+  const state = this.session?.status;
+  console.log('Ultravox session status:', state);
 
-        if (['connected', 'idle', 'ready'].includes(event.state)) {
-          this.isConnected = true;
-          this.isConnecting = false;
-          this.status = 'Connected - Speak now!';
-        } else if (event.state === 'connecting') {
-          this.isConnecting = true;
-          this.isConnected = false;
-          this.status = 'Connecting...';
-        } else if (event.state === 'disconnected' || event.state === 'closed') {
-          this.isConnected = false;
-          this.isConnecting = false;
-          this.status = 'Disconnected';
-        } else if (event.state === 'error') {
-          this.isConnected = false;
-          this.isConnecting = false;
-          this.status = 'Error';
-        } else {
-          this.status = event.state;
-        }
-      });
+  switch (state) {
+    case UltravoxSessionStatus.CONNECTING:
+      this.isConnecting = true;
+      this.isConnected = false;
+      this.status = 'Connecting...';
+      break;
 
+    case UltravoxSessionStatus.IDLE:
+    case UltravoxSessionStatus.LISTENING:
+    case UltravoxSessionStatus.THINKING:
+    case UltravoxSessionStatus.SPEAKING:
+      this.isConnecting = false;
+      this.isConnected = true;
+      this.status = 'Connected - Speak now!';
+      break;
+
+    case UltravoxSessionStatus.DISCONNECTED:
+    case UltravoxSessionStatus.DISCONNECTING:
+      this.isConnecting = false;
+      this.isConnected = false;
+      this.status = 'Disconnected';
+      break;
+
+    default:
+      this.status = state || 'Unknown';
+      console.warn('Unhandled Ultravox state:', state);
+      break;
+  }
+});
       // ✅ Handle transcripts
       this.session.addEventListener('transcripts', (event: any) => {
         console.log('Transcript:', event);
