@@ -23,18 +23,19 @@ export class App   {
   private readonly ULTRAVOX_API_KEY = 'your_ultravox_api_key_here';
   private readonly JOIN_URL = 'your_ultravox_join_url_here';
   async createCall(): Promise<string> {
-  const response = await fetch(`https://api.ultravox.ai/api/agents/${this.agent_id}/calls`, {
+  const response = await fetch(`https://api.ultravox.ai/api/agents/75e2aaa3-e4cc-4bf1-b137-0c7268881055/calls`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'X-API-Key': this.api_key
     },
-    body: JSON.stringify({
-      metadata: {},
-      medium: {
-        webRtc: {}
-      }
-    })
+    body: JSON.stringify({ 
+     "metadata": {},
+  "medium": {
+    "webRtc": {}
+
+  }
+})
   });
 
   if (!response.ok) {
